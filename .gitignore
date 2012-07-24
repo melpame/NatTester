@@ -8,6 +8,9 @@
 # Java class files
 *.class
 
+#DSIgnore
+*.DS_Store
+
 # generated files
 bin/
 gen/
