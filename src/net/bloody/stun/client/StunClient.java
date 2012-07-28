@@ -30,8 +30,32 @@ java -cp jstun.jar:slf4j-api-1.5.6.jar:slf4j-jdk14-1.5.6.jar de.javawi.jstun.tes
  */
 public class StunClient {
 	private static final String tag = "bloody";
+
+	public enum StunMode {
+		Full,
+		;
+		
+		@Override
+		public
+		String toString() {
+			return this.name().toLowerCase();
+		}
+	}
 	
-	public StunClient(Context context, String mode, String protocol, String serverIpAddress, String port) {
+	
+	public enum StunProtocol {
+		Tcp,
+		Udp,
+		;
+		
+		@Override
+		public
+		String toString() {
+			return this.name().toLowerCase();
+		}
+	}
+	
+	public StunClient(Context context, StunMode mode, StunProtocol protocol, String serverIpAddress, String port) {
 		this.context = context;
 		this.mode = mode;
 		this.protocol = protocol;
@@ -51,9 +75,9 @@ public class StunClient {
     		commandLine.add(applicationRoot + "/bin/stunclient");
     		commandLine.add(serverIpAddress);
     		commandLine.add("--mode");
-    		commandLine.add(mode);
+    		commandLine.add(mode.toString());
     		commandLine.add("--protocol");
-    		commandLine.add(protocol);
+    		commandLine.add(protocol.toString());
     		commandLine.add("--localport");
     		commandLine.add(port);
     	
@@ -72,6 +96,7 @@ public class StunClient {
 				
 			} catch (IOException e) {
 				Log.e(tag, "test error : ", e);
+				output = "test error : " + e.getMessage();
 			}
 		
     	}
@@ -92,7 +117,7 @@ public class StunClient {
 
 		while ((thisLine = br.readLine()) != null) {
 
-			output += thisLine;
+			output += thisLine + "\r\n";
 
 			Log.v(tag, "result : " + thisLine);
 
@@ -104,10 +129,27 @@ public class StunClient {
 		return output;
 	}
 	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("mode : ");
+		sb.append(this.mode.toString());
+		sb.append(", ");
+		sb.append("protocol : ");
+		sb.append(this.protocol.toString());
+		sb.append(", ");
+		sb.append("server : ");
+		sb.append(this.serverIpAddress + ":" + port);
+		
+		
+		return sb.toString();
+	}
+	
 	
 	private final Context context;
-	private final String mode;
-	private final String protocol;
+	private final StunMode mode;
+	private final StunProtocol protocol;
 	private final String serverIpAddress;
 	private final String port;
 	private String output;

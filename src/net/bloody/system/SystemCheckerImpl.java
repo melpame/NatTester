@@ -20,6 +20,9 @@ public class SystemCheckerImpl implements SystemChecker {
 	private final int sdk_int;
 	private final String manufacturer;
 	private final String code_name;
+	private final String networkOperatorName;
+	private final String connectivityTypeName;
+	private final String networkTypeName;
 	
 	public SystemCheckerImpl(Context context) {
 		this.context = context;
@@ -28,20 +31,63 @@ public class SystemCheckerImpl implements SystemChecker {
 		this.version_incremental = Build.VERSION.INCREMENTAL;
 		this.sdk_int = android.os.Build.VERSION.SDK_INT;
 		this.manufacturer = android.os.Build.MANUFACTURER;
-		
-		
 	
-		
-		//Logger.i("info : " + (new android.os.Build()))
 		
 		Logger.vi("Build info Version RELEASE: " + android.os.Build.VERSION.RELEASE);
 		checkVersion();
+		{
+			
+			ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+			
+			NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+			
+			Logger.i("networkInfo : " + networkInfo);
+			
+			this.connectivityTypeName = networkInfo.getTypeName();
+			
+		}
+		
+		{
+			
+			TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+			
+			String line1Number = telephonyManager.getLine1Number();
+			
+			Logger.i("line1Number : " + line1Number);
+			
+			Logger.i("countryIos : " + telephonyManager.getNetworkCountryIso());
+
+			Logger.i("operator : " + telephonyManager.getNetworkOperator());
+			
+			Logger.i("operatatorName : " + telephonyManager.getNetworkOperatorName());
+			
+			int networkType = telephonyManager.getNetworkType();
+			
+			Logger.i("netowrk Type : " + networkType);
+			
+			if (networkType == TelephonyManager.NETWORK_TYPE_GPRS) {
+				this.networkTypeName = "GPRS";
+			}
+			else if (networkType == TelephonyManager.NETWORK_TYPE_HSDPA) {
+				this.networkTypeName = "HSDPA";
+			}
+			else if (networkType == TelephonyManager.NETWORK_TYPE_HSPA) {
+				this.networkTypeName = "HSPA";
+			}
+			else if (networkType == TelephonyManager.NETWORK_TYPE_HSUPA) {
+				this.networkTypeName = "HSUPA";
+			}
+			else if (networkType == TelephonyManager.NETWORK_TYPE_UMTS) {
+				this.networkTypeName = "UMTS";
+			}
+			else {
+				this.networkTypeName = "unknown : " + networkType;
+			}
+			
+			this.networkOperatorName = telephonyManager.getNetworkOperatorName();
+			
+		}
 	}
-	
-	// release date
-	private int year;
-	private int month;
-	private int day;
 	
 	private void checkVersion() {
 		
@@ -54,41 +100,6 @@ public class SystemCheckerImpl implements SystemChecker {
 			
 		} catch (Exception ignore) {
 		}
-		
-	}
-	
-	private void checkNetwork() {
-		
-		ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-		
-		NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-		
-		Logger.i("networkInfo : " + networkInfo);
-		
-		
-	}
-	
-	
-	private void checkTelephony() {
-		
-		TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-		
-		String line1Number = telephonyManager.getLine1Number();
-		
-		Logger.i("line1Number : " + line1Number);
-		
-		Logger.i("countryIos : " + telephonyManager.getNetworkCountryIso());
-
-		Logger.i("operator : " + telephonyManager.getNetworkOperator());
-		
-		Logger.i("operatatorName : " + telephonyManager.getNetworkOperatorName());
-		
-		int networkType = telephonyManager.getNetworkType();
-		
-		Logger.i("netowrk Type : " + networkType);
-		
-		
-		
 		
 	}
 	
@@ -117,16 +128,21 @@ public class SystemCheckerImpl implements SystemChecker {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		
-		sb.append(model);
+		sb.append(this.manufacturer);
 		sb.append(", ");
-		sb.append(sdk_int);
+		sb.append(this.model);
 		sb.append(", ");
-		sb.append(code_name);
+		sb.append(this.sdk_int);
 		sb.append(", ");
-		sb.append(version_incremental);
-		
-		checkNetwork();
-		checkTelephony();
+		sb.append(this.code_name);
+		sb.append(", ");
+		sb.append(this.version_incremental);
+		sb.append(", ");
+		sb.append(this.connectivityTypeName);
+		sb.append(", ");
+		sb.append(this.networkOperatorName);
+		sb.append(", ");
+		sb.append(this.networkTypeName);
 		
 		return sb.toString();
 	}
