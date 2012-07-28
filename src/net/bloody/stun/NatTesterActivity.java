@@ -2,18 +2,26 @@ package net.bloody.stun;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.zip.CRC32;
+import java.util.Enumeration;
 
 import net.bloody.stun.R;
+import net.bloody.stun.client.StunClient;
+import net.bloody.stun.client.StunClientInstaller;
+import net.bloody.system.SystemChecker;
+import net.bloody.system.SystemCheckerImpl;
+import net.bloody.wifi.WifiConfigurationHelper;
 
 
 
@@ -23,11 +31,13 @@ import de.javawi.jstun.attribute.MessageAttributeParsingException;
 import de.javawi.jstun.header.MessageHeaderParsingException;
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
-import de.javawi.jstun.test.demo.DiscoveryTestDemo;
 import de.javawi.jstun.util.UtilityException;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 
 public class NatTesterActivity extends Activity {
@@ -46,6 +56,17 @@ public class NatTesterActivity extends Activity {
         Log.w(tag, "codepath : " + this.getPackageCodePath());
         
         
+        final String dirName = Environment.getExternalStorageDirectory().getAbsolutePath() + "/stundata/";
+        {
+			File dir = new File(dirName);
+		
+			dir.mkdir();
+		
+		}
+        
+        final SystemChecker systemChecker = new SystemCheckerImpl(context);
+		
+			
 		
 		Thread t = new Thread()
 		{
@@ -53,11 +74,17 @@ public class NatTesterActivity extends Activity {
 			public void run()
 			{
 		
-				installNativeBin();
+				(new StunClientInstaller(context)).install();
+				
+				try {
+					WifiConfigurationHelper.setWifEnabledAndWait(context, false);
+				} catch (InterruptedException e) {
+					Log.e(tag, "wifi diable failed", e);
+				}
 				
 				InetAddress inetAddress =  null;
 				try {
-					inetAddress = InetAddress.getByName("33.233.223.57");
+					inetAddress = InetAddress.getByName(getLocalAddress());
 				} catch (UnknownHostException e) {
 					Log.e(tag, "inetaddress error : ", e);
 				}
@@ -65,174 +92,125 @@ public class NatTesterActivity extends Activity {
 				Log.i(tag, "inetaddress : " + inetAddress);
 				
 				DiscoveryTest test = new DiscoveryTest(inetAddress, "112.220.75.19", 3478);
-		
-        	try {
-        		DiscoveryInfo discoveryInfo = test.test();
-        		Log.i(tag, "result : " + discoveryInfo);
-        	} catch (SocketException e) {
-        		// TODO Auto-generated catch block
-        		Log.e(tag, "test error : ", e);
-        	} catch (UnknownHostException e) {
-        		// TODO Auto-generated catch block
-        		Log.e(tag, "test error : ", e);
-        	} catch (MessageAttributeParsingException e) {
-        		// TODO Auto-generated catch block
-        		Log.e(tag, "test error : ", e);
-        	} catch (MessageHeaderParsingException e) {
-        		// TODO Auto-generated catch block
-        		Log.e(tag, "test error : ", e);
-        	} catch (UtilityException e) {
-        		// TODO Auto-generated catch block
-        		Log.e(tag, "test error : ", e);
-        	} catch (IOException e) {
-				// TODO Auto-generated catch block
-        		Log.e(tag, "test error : ", e);
-        	} catch (MessageAttributeException e) {
-        		// TODO Auto-generated catch block
-        		Log.e(tag, "test error : ", e);
-        	}
-        	// InetAddress inetAddress = InetAddress.getLocalHost();
-        
-        	//DiscoveryTest test = new DiscoveryTest(iaddress, stunServer, port);
-        	
-        	
-        	{
-        		final ArrayList<String> commandLine = new ArrayList<String>();
-        		commandLine.add(applicationRoot + "/bin/stunclient");
-        		commandLine.add("112.220.75.19");
-        		commandLine.add("--mode");
-        		commandLine.add("full");
-        		commandLine.add("--protocol");
-        		commandLine.add("tcp");
-        	
-			
 
-        		Log.i(tag, "command : " + commandLine);
-
-        		try {
-					Process process = Runtime.getRuntime().exec(
-						commandLine.toArray(new String[0]));
-					
-					writeLogcat(process.getInputStream());
+				try {
+					DiscoveryInfo discoveryInfo = test.test();
+					Log.i(tag, "result : " + discoveryInfo);
+				} catch (SocketException e) {
+					// TODO Auto-generated catch block
+					Log.e(tag, "test error : ", e);
+				} catch (UnknownHostException e) {
+					// TODO Auto-generated catch block
+					Log.e(tag, "test error : ", e);
+				} catch (MessageAttributeParsingException e) {
+					// TODO Auto-generated catch block
+					Log.e(tag, "test error : ", e);
+				} catch (MessageHeaderParsingException e) {
+					// TODO Auto-generated catch block
+					Log.e(tag, "test error : ", e);
+				} catch (UtilityException e) {
+					// TODO Auto-generated catch block
+					Log.e(tag, "test error : ", e);
 				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					Log.e(tag, "test error : ", e);
+				} catch (MessageAttributeException e) {
+					// TODO Auto-generated catch block
 					Log.e(tag, "test error : ", e);
 				}
-			
-        	}
-        	
-				
+
+				FileOutputStream fos = null;
+				try {
+					fos = new FileOutputStream(dirName + "result.txt");
+				} catch (FileNotFoundException e) {
+					Log.e(tag, "get NOT make output file : ", e);
+				}
+
+				{
+					StunClient stunClient = new StunClient(context, "full",
+							"tcp", "112.220.75.19", "3478");
+
+					stunClient.execute();
+
+					try {
+						writeOutput(fos, stunClient.getOutput());
+						writeOutput(fos, systemChecker.toString());
+					} catch (IOException e) {
+						Log.e(tag, "writeOutput error : ", e);
+					}
+
+				}
+
+				try {
+					fos.close();
+				} catch (IOException e) {
+					Log.e(tag, "fos.close error :", e);
+				}
+
 			}
 		};
-		
+
 		t.start();
         
     }
     
-    private void writeLogcat(InputStream fis) throws IOException {
-
-    	BufferedReader br = null;
-    	InputStreamReader isr = null;
-
-    	isr = new InputStreamReader(fis);
-
-    	br = new BufferedReader(isr);
-
-    	String thisLine;
-
-    	while ((thisLine = br.readLine()) != null) {
-
-	
-    		Log.w(tag, "result : " + thisLine);
-    	}
-
-
-    }
-    
-    private static String applicationRoot;
-    
-    
-    private void installNativeBin() {
-    	applicationRoot = context.getFilesDir().getParent();
-    	
-   
-    	Log.d(tag, "Current directory is "+ applicationRoot);
-    	
-    	checkDirs();
-    	
-    	copyFile(applicationRoot + "/bin/stunclient", "0777", R.raw.stunclient);
-    	
-    	
-    }
-    
-    
-    private String copyFile(String filename, String permission, int ressource) {
-    	String result = copyFile(filename, ressource);
-    	if (result != null) {
-    		return result;
-    	}
+    private String getLocalAddress() {
+    	queryNetworkInterfaces();
+    	String localAddress = "127.0.0.1";
     	try {
- 
-    		
-    		{
-        		final ArrayList<String> commandLine = new ArrayList<String>();
-        		commandLine.add("chmod");
-        		commandLine.add(permission);
-        		commandLine.add(filename);
-        		
-    
-        		Log.i(tag, "command : " + commandLine);
-
-        		try {
-					Process process = Runtime.getRuntime().exec(
-						commandLine.toArray(new String[0]));
-				} catch (IOException e) {
-					Log.e(tag, "copyFile error : ", e);
-				}
-			
-        	}
-    	} catch(Exception ignore) {}
+    	    Socket socket = new Socket("www.google.com", 80);
+    	    Log.i(tag, socket.getLocalAddress().toString());
+    	    localAddress = socket.getLocalAddress().toString().replaceAll("/", "");
+    	} catch (Exception e) {
+    	    Log.e(tag, "can NOT get localaddress", e);
+    	}
     	
-    	return result;
+    	return localAddress;
     }
     
-    
-    private String copyFile(String filename, int ressource) {
-    	File outFile = new File(filename);
-    	Log.d(tag, "Copying file '"+filename+"' ...");
-    	InputStream is = context.getResources().openRawResource(ressource);
-    	byte buf[] = new byte[1024];
-        int len;
+    public void queryNetworkInterfaces() {
         try {
-        	OutputStream out = new FileOutputStream(outFile);
-        	while((len = is.read(buf))>0) {
-				out.write(buf,0,len);
-			}
-        	out.close();
-        	is.close();
-		} catch (IOException e) {
-			return "Couldn't install file - "+filename+"!";
-		}
-		return null;
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+                NetworkInterface intf = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress()) {
+                        //return inetAddress.getHostAddress().toString();
+                    	
+                    	Log.i(tag, String.format("interface %s - address %s", intf.getDisplayName(), inetAddress.getHostAddress()));
+                    }
+                }
+            }
+        } catch (SocketException e) {
+            Log.e(tag, "can Not get interface status : ", e);
+        }
+        
+        return;
     }
     
-    private void checkDirs() {
-    	File dir = new File(applicationRoot);
-    	if (dir.exists() == false) {
-    			Log.e(tag, "Application data-dir does not exist!");
-    	}
-    	else {
-    		String[] dirs = { "/bin", "/var", "/conf" };
-    		for (String dirname : dirs) {
-    			dir = new File(applicationRoot + dirname);
-    	    	if (dir.exists() == false) {
-    	    		if (!dir.mkdir()) {
-    	    			Log.e(tag, "Couldn't create " + dirname + " directory!");
-    	    		}
-    	    	}
-    	    	else {
-    	    		Log.d(tag, "Directory '"+dir.getAbsolutePath()+"' already exists!");
-    	    	}
-    		}
-    	}
-    }
+	private void writeOutput(FileOutputStream fos, String output)
+			throws IOException {
+
+		final long length = output.getBytes().length;
+		fos.write(output.getBytes(), 0, (int) length);
+
+	}
+    
+	private void sendMail() {
+		String filename = "result.txt";
+		Uri uri = Uri.parse("file:///sdcard/download/stundata/" + filename);
+		Log.i(tag, "sendfile: " + filename);
+
+		Intent sendIntent = new Intent(Intent.ACTION_SEND);
+		sendIntent.putExtra(Intent.EXTRA_EMAIL,
+				new String[] { "joe.joey@gmail.com", "joey.joe@samsung.com" });
+		sendIntent.putExtra(Intent.EXTRA_SUBJECT, "result");
+		sendIntent.setType("plain/text");
+		sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
+		sendIntent.putExtra(Intent.EXTRA_TEXT, "log from : ");
+		startActivity(Intent.createChooser(sendIntent, "send u-Ready dump log"));
+
+	}
+    
+  
 }
