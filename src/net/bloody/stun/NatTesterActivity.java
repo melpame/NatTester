@@ -21,7 +21,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.opengl.Visibility;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -115,6 +114,12 @@ public class NatTesterActivity extends Activity {
 	private void startTest() {
 		
 	    
+		btSendMail.setVisibility(View.GONE);
+		tvResult.setText("");
+		
+		result = "";
+		
+		
         resultDirName = Environment.getExternalStorageDirectory().getAbsolutePath() + "/stundata/";
         
         {
@@ -276,7 +281,10 @@ public class NatTesterActivity extends Activity {
 
 		Intent sendIntent = new Intent(Intent.ACTION_SEND);
 		sendIntent.putExtra(Intent.EXTRA_EMAIL,
-				new String[] { "joe.joey@gmail.com", "melpame@gmail.com" });
+				new String[] { "webmaster@netmanias.com" });
+		sendIntent.putExtra(Intent.EXTRA_CC, 
+				new String[] { "joe.joey@gmail.com", "cmyoo@netmanias.com" });
+		
 		sendIntent.putExtra(Intent.EXTRA_SUBJECT, "NatTester result");
 		sendIntent.setType("plain/text");
 		sendIntent.putExtra(Intent.EXTRA_STREAM, uri);

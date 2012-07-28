@@ -80,6 +80,12 @@ public class SystemCheckerImpl implements SystemChecker {
 			else if (networkType == TelephonyManager.NETWORK_TYPE_UMTS) {
 				this.networkTypeName = "UMTS";
 			}
+			else if (networkType == 13) {
+				this.networkTypeName = "LTE"; // NETWORK_TYPE_LTE
+			}
+			else if (networkType == 15) {
+				this.networkTypeName = "HSPAP"; // NETWORK_TYPE_HSPAP
+			}
 			else {
 				this.networkTypeName = "unknown : " + networkType;
 			}

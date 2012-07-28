@@ -63,6 +63,8 @@ public class StunTester {
 		testCases.add(new StunClient(context, StunMode.Full, StunProtocol.Udp,
 				this.serverIpAddress, "2000"));
 		testCases.add(new StunClient(context, StunMode.Full, StunProtocol.Udp,
+				this.serverIpAddress, "18350"));
+		testCases.add(new StunClient(context, StunMode.Full, StunProtocol.Udp,
 				this.serverIpAddress, "20000"));
 		testCases.add(new StunClient(context, StunMode.Full, StunProtocol.Udp,
 				this.serverIpAddress, "40000"));
@@ -75,6 +77,8 @@ public class StunTester {
 				this.serverIpAddress, "3478"));
 		testCases.add(new StunClient(context, StunMode.Full, StunProtocol.Tcp,
 				this.serverIpAddress, "2000"));
+		testCases.add(new StunClient(context, StunMode.Full, StunProtocol.Tcp,
+				this.serverIpAddress, "18350"));
 		testCases.add(new StunClient(context, StunMode.Full, StunProtocol.Tcp,
 				this.serverIpAddress, "20000"));
 		testCases.add(new StunClient(context, StunMode.Full, StunProtocol.Tcp,
@@ -135,7 +139,7 @@ public class StunTester {
 		writeLine();
 
 		final String resultSummary = String.format(
-				"Total Test : %d, Success : %d, Fail : %d\r\n",
+				"Test Finished Total : %d, Success : %d, Fail : %d\r\n",
 				testCases.size(), testCases.size() - failCount, failCount);
 		
 		writeOutput(outputStream, resultSummary);
