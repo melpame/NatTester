@@ -9,6 +9,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
+import java.util.Locale;
 
 
 import net.bloody.stun.R;
@@ -20,6 +22,11 @@ import net.bloody.wifi.WifiConfigurationHelper;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Address;
+import android.location.Criteria;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -54,6 +61,7 @@ public class NatTesterActivity extends Activity {
         setContentView(R.layout.nat_tester);
         
         context = this.getBaseContext();
+        
          
         tvSummary = (TextView) this.findViewById(R.id.nat_tester_summary);
         tvResult = (TextView) this.findViewById(R.id.nat_tester_result);
@@ -73,6 +81,8 @@ public class NatTesterActivity extends Activity {
         
 		
         btSendMail.setVisibility(View.GONE);
+        
+        //startTest();
         
     }
     
@@ -192,6 +202,9 @@ public class NatTesterActivity extends Activity {
 					Log.e(tag, "get NOT make output file : ", e);
 				}
 				
+				String locationString = getLocation();
+				
+				Log.e(tag, "location : " + locationString);
 				
 				(new StunTester(context, handler, fos, serverIpAddress)).testAll();
 
@@ -274,6 +287,7 @@ public class NatTesterActivity extends Activity {
 		} 
 
 	}
+	
     
 	private void sendMail(SystemChecker systemChecker, String filename) {
 		Uri uri = Uri.parse("file:///sdcard/stundata/" + filename);
@@ -283,7 +297,7 @@ public class NatTesterActivity extends Activity {
 		sendIntent.putExtra(Intent.EXTRA_EMAIL,
 				new String[] { "webmaster@netmanias.com" });
 		sendIntent.putExtra(Intent.EXTRA_CC, 
-				new String[] { "joe.joey@gmail.com", "cmyoo@netmanias.com" });
+				new String[] { "cmyoo@netmanias.com" });
 		
 		sendIntent.putExtra(Intent.EXTRA_SUBJECT, "NatTester result");
 		sendIntent.setType("plain/text");
@@ -292,6 +306,66 @@ public class NatTesterActivity extends Activity {
 		startActivity(Intent.createChooser(sendIntent, "send result"));
 
 	}
-    
+	
+	private String getLocation() {
+		//String locationName = "";
+
+		LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+		Criteria criteria = new Criteria();
+		criteria.setAccuracy(Criteria.ACCURACY_LOW);
+		criteria.setAltitudeRequired(false);
+		criteria.setBearingRequired(false);
+		criteria.setCostAllowed(true);
+		criteria.setPowerRequirement(Criteria.POWER_LOW);
+		String provider = locationManager.getBestProvider(criteria, true);
+
+		Location location = locationManager.getLastKnownLocation(provider);
+		
+		
+		return getLocationString(location);
+
+	}
+	
+	private String getLocationString(Location location) {
+		String latLongString = "unknown";
+		String addressString = "unknown";
+		
+		if (location == null) return "";
+
+		// 맵 위치를 업데이트
+		Double geoLat = location.getLatitude() * 1E6;
+		Double geoLng = location.getLongitude() * 1E6;
+
+		double lat = location.getLatitude();
+		double lng = location.getLongitude();
+		latLongString = "위도:" + lat + "경도:" + lng;
+
+		double latitude = location.getLatitude();
+		double longitude = location.getLongitude();
+
+		Geocoder gc = new Geocoder(this, Locale.getDefault());
+
+		try {
+			List<Address> address = gc.getFromLocation(latitude, longitude, 1);
+			StringBuffer sb = new StringBuffer();
+			if (address.size() > 0) {
+				Address address2 = address.get(0);
+
+				for (int i = 0; i < address2.getMaxAddressLineIndex(); i++) {
+					sb.append(address2.getAddressLine(i)).append("\n");
+				}
+
+				sb.append(address2.getLocality()).append(", ");
+				sb.append(address2.getPostalCode()).append(", ");
+				sb.append(address2.getCountryName());
+			}
+			addressString = sb.toString();
+		} catch (Exception e) {
+			Log.i(tag, "err : " + e);
+		}
+
+		return latLongString + " " + addressString;
+	}
   
 }

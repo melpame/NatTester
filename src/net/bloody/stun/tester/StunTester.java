@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -94,12 +95,15 @@ public class StunTester {
 
 		int failCount = 0;
 		int testCount = 0;
+		
+		final Date now = new Date();
 
 		final SystemChecker systemChecker = net.bloody.system.Environment
 				.getInstance(context).getSystemChecker();
 
 		writeOutput(outputStream, systemChecker.toString() + "\r\n");
 
+		writeOutput(outputStream, "test time : " + now.toLocaleString() + "\r\n");
 		
 		writeOutput(outputStream, "\r\nJSTUN Test\r\n");
 		

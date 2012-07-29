@@ -1,6 +1,5 @@
 package net.bloody.system;
 
-import java.io.File;
 import java.util.List;
 
 import net.bloody.utils.Logger;
@@ -23,6 +22,7 @@ public class SystemCheckerImpl implements SystemChecker {
 	private final String networkOperatorName;
 	private final String connectivityTypeName;
 	private final String networkTypeName;
+	private boolean hasDataNetwork = false;
 	
 	public SystemCheckerImpl(Context context) {
 		this.context = context;
@@ -43,7 +43,14 @@ public class SystemCheckerImpl implements SystemChecker {
 			
 			Logger.i("networkInfo : " + networkInfo);
 			
-			this.connectivityTypeName = networkInfo.getTypeName();
+			if (networkInfo != null) {
+			
+				this.hasDataNetwork = true;
+				this.connectivityTypeName = networkInfo.getTypeName();
+			}
+			else {
+				this.connectivityTypeName = "no-data-network";
+			}
 			
 		}
 		
@@ -79,6 +86,9 @@ public class SystemCheckerImpl implements SystemChecker {
 			}
 			else if (networkType == TelephonyManager.NETWORK_TYPE_UMTS) {
 				this.networkTypeName = "UMTS";
+			}
+			else if (networkType == TelephonyManager.NETWORK_TYPE_CDMA) {
+				this.networkTypeName = "CDMA";
 			}
 			else if (networkType == 13) {
 				this.networkTypeName = "LTE"; // NETWORK_TYPE_LTE
